@@ -1,122 +1,187 @@
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-const scoreElement = document.getElementById("score");
-
-const gridSize = 20;
-const tileCount = canvas.width / gridSize;
-
-// Variables de estado
-let snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
-let food = { x: 5, y: 5 };
-let dx = 1, dy = 0;
-let score = 0, gameSpeed = 150;
-let juegoActivo = false; 
-
-// --- INICIALIZACIÓN ---
-document.getElementById("boton-jugar").onclick = () => {
-    document.getElementById("pantalla-inicio").style.display = "none";
-    document.getElementById("juego-contenedor").style.display = "block";
-    iniciarPartida();
-};
-
-document.getElementById("btn-reiniciar").onclick = () => iniciarPartida();
-document.getElementById("btn-salir").onclick = () => {
-    juegoActivo = false;
-    document.getElementById("juego-contenedor").style.display = "none";
-    document.getElementById("controles-fin").style.display = "none";
-    document.getElementById("pantalla-inicio").style.display = "flex";
-};
-
-function iniciarPartida() {
-    snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
-    dx = 1; dy = 0;
-    score = 0;
-    scoreElement.innerText = score;
-    document.getElementById("controles-fin").style.display = "none";
-    
-    juegoActivo = false; // El juego espera al PLAY
-    document.getElementById("btnPausa").innerText = "PLAY";
-    
-    generateFood();
-    clearCanvas();
-    drawFood();
-    drawSnake();
-}
-
-// --- BUCLE PRINCIPAL ---
-function main() {
-    if (!juegoActivo) return; 
-
-    if (hasGameEnded()) {
-        juegoActivo = false;
-        document.getElementById("controles-fin").style.display = "block";
-        document.getElementById("btnPausa").innerText = "PLAY";
-        return;
-    }
-
-    clearCanvas();
-    drawFood();
-    drawSnake();
-    moveSnake(); // Movemos aquí directamente
-
-    setTimeout(main, gameSpeed); // Bucle simplificado
-}
-
-// --- BOTÓN PLAY/PAUSA ---
-function alternarPausa() {
-    if (!juegoActivo) {
-        juegoActivo = true;
-        document.getElementById("btnPausa").innerText = "PAUSA";
-        main(); // Lanzamos el bucle
-    } else {
-        juegoActivo = false;
-        document.getElementById("btnPausa").innerText = "PLAY";
-    }
-}
-
-// --- CONTROLES Y LÓGICA ---
-document.addEventListener("keydown", (e) => {
-    const k = e.keyCode;
-    if (k === 37 && dx !== 1) { dx = -1; dy = 0; }
-    if (k === 38 && dy !== 1) { dx = 0; dy = -1; }
-    if (k === 39 && dx !== -1) { dx = 1; dy = 0; }
-    if (k === 40 && dy !== -1) { dx = 0; dy = 1; }
-});
-
-// Controles táctiles
-document.getElementById("btnUp").ontouchstart = () => { if (dy !== 1) { dx = 0; dy = -1; } };
-document.getElementById("btnDown").ontouchstart = () => { if (dy !== -1) { dx = 0; dy = 1; } };
-document.getElementById("btnLeft").ontouchstart = () => { if (dx !== 1) { dx = -1; dy = 0; } };
-document.getElementById("btnRight").ontouchstart = () => { if (dx !== 1) { dx = 1; dy = 0; } };
-
-function clearCanvas() { ctx.fillStyle = "#252526"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
-function drawSnake() { ctx.fillStyle = "#4ec9b0"; snake.forEach(p => ctx.fillRect(p.x * gridSize, p.y * gridSize, gridSize - 2, gridSize - 2)); }
-function moveSnake() {
-    const head = { x: snake[0].x + dx, y: snake[0].y + dy };
-    snake.unshift(head);
-    if (snake[0].x === food.x && snake[0].y === food.y) { score += 10; scoreElement.innerText = score; generateFood(); }
-    else snake.pop();
-}
-function drawFood() { ctx.fillStyle = "#f44747"; ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2); }
-function generateFood() {
-    let nuevaPosicion;
-    let colision;
-
-    // Repetimos hasta encontrar una posición libre
-    do {
-        nuevaPosicion = { 
-            x: Math.floor(Math.random() * tileCount), 
-            y: Math.floor(Math.random() * tileCount) 
+class Solitario {
+    constructor() {
+        this.palos = [
+            { signo: '♥', color: 'rojo' }, { signo: '♦', color: 'rojo' },
+            { signo: '♣', color: 'negro' }, { signo: '♠', color: 'negro' }
+        ];
+        this.valores = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        this.estado = {
+            baraja: [], descarte: [],
+            columnas: [[], [], [], [], [], [], []],
+            pilasDestino: { '♥': [], '♦': [], '♣': [], '♠': [] },
+            seleccion: null
         };
-        
-        // Verificamos si la nueva posición coincide con cualquier parte de la serpiente
-        colision = snake.some(segmento => segmento.x === nuevaPosicion.x && segmento.y === nuevaPosicion.y);
-    } while (colision); // Si hubo colisión, el bucle "do...while" vuelve a empezar
+        this.init();
+    }
 
-    food = nuevaPosicion;
+    init() {
+        this.crearBaraja();
+        this.repartir();
+        this.configurarEventos();
+        this.render();
+    }
+
+    crearBaraja() {
+        this.estado.baraja = [];
+        this.palos.forEach(palo => {
+            this.valores.forEach((valor, i) => {
+                this.estado.baraja.push({ valor, numero: i + 1, ...palo, oculta: true });
+            });
+        });
+        this.estado.baraja.sort(() => Math.random() - 0.5);
+    }
+
+    repartir() {
+        for (let i = 0; i < 7; i++) {
+            for (let j = i; j < 7; j++) {
+                let carta = this.estado.baraja.pop();
+                if (j === i) carta.oculta = false;
+                this.estado.columnas[j].push(carta);
+            }
+        }
+    }
+
+    crearCartaElemento(carta, info) {
+        const div = document.createElement('div');
+        const sel = this.estado.seleccion;
+        const esSeleccionada = sel && sel.tipo === info?.tipo && sel.colIndex === info?.colIndex && sel.cartaIndex === info?.cartaIndex;
+
+        div.className = `carta ${carta.color} ${carta.oculta ? 'boca-abajo' : ''} ${esSeleccionada ? 'seleccionada' : ''}`;
+        
+        if (!carta.oculta) {
+            div.innerHTML = `<div class="valor-superior">${carta.valor}${carta.signo}</div><div class="palo-central">${carta.signo}</div>`;
+            if (info) {
+                div.onclick = (e) => { e.stopPropagation(); this.seleccionarCarta(info.tipo, info.colIndex, info.cartaIndex); };
+                div.ondblclick = (e) => { e.stopPropagation(); this.autoMover(carta, info); };
+            }
+        }
+
+        if (info?.tipo === 'columna') {
+            const gap = window.innerWidth < 600 ? 16 : 26;
+            div.style.top = `${info.cartaIndex * gap}px`;
+            div.style.zIndex = info.cartaIndex;
+        }
+        return div;
+    }
+
+    render() {
+        // Mazo
+        const mazoDiv = document.getElementById('mazo-origen');
+        mazoDiv.className = `pila ${this.estado.baraja.length === 0 ? 'vacia' : 'boca-abajo'}`;
+        mazoDiv.innerHTML = this.estado.baraja.length === 0 ? '↻' : '';
+
+        // Descarte
+        const descarteDiv = document.getElementById('descarte');
+        descarteDiv.innerHTML = '';
+        if (this.estado.descarte.length > 0) {
+            descarteDiv.appendChild(this.crearCartaElemento(this.estado.descarte[this.estado.descarte.length-1], { tipo: 'descarte' }));
+        }
+
+        // Columnas
+        this.estado.columnas.forEach((col, i) => {
+            const el = document.getElementById(`col-${i}`);
+            el.innerHTML = '';
+            col.forEach((c, j) => el.appendChild(this.crearCartaElemento(c, { tipo: 'columna', colIndex: i, cartaIndex: j })));
+            el.onclick = () => this.estado.seleccion && this.intentarMoverAColumna(i);
+        });
+
+        // Destinos
+        this.palos.forEach(p => {
+            const el = document.getElementById(`pila-${p.signo}`);
+            const pila = this.estado.pilasDestino[p.signo];
+            el.innerHTML = pila.length > 0 ? '' : p.signo;
+            if (pila.length > 0) el.appendChild(this.crearCartaElemento(pila[pila.length-1], null));
+            el.onclick = (e) => { e.stopPropagation(); this.intentarMoverADestino(p.signo); };
+        });
+
+        this.chequearVictoria();
+    }
+
+    seleccionarCarta(tipo, colIndex, cartaIndex) {
+        if (this.estado.seleccion && tipo === 'columna') return this.intentarMoverAColumna(colIndex);
+        this.estado.seleccion = { tipo, colIndex, cartaIndex };
+        this.render();
+    }
+
+    robarCarta() {
+        if (this.estado.baraja.length === 0) {
+            this.estado.baraja = [...this.estado.descarte].reverse().map(c => ({...c, oculta: true}));
+            this.estado.descarte = [];
+        } else {
+            const c = this.estado.baraja.pop();
+            c.oculta = false;
+            this.estado.descarte.push(c);
+        }
+        this.estado.seleccion = null;
+        this.render();
+    }
+
+    intentarMoverAColumna(destIdx) {
+        const sel = this.estado.seleccion;
+        if (!sel) return;
+        let cartas = sel.tipo === 'columna' ? this.estado.columnas[sel.colIndex].slice(sel.cartaIndex) : [this.estado.descarte[this.estado.descarte.length-1]];
+        if (!cartas[0]) return;
+        
+        const colDest = this.estado.columnas[destIdx];
+        const ultima = colDest[colDest.length-1];
+        
+        const esValido = (!ultima && cartas[0].valor === 'K') || (ultima && ultima.color !== cartas[0].color && ultima.numero === cartas[0].numero + 1);
+
+        if (esValido) {
+            if (sel.tipo === 'columna') {
+                this.estado.columnas[sel.colIndex].splice(sel.cartaIndex);
+                this.estado.columnas[destIdx].push(...cartas);
+                this.revelarUltima(sel.colIndex);
+            } else {
+                this.estado.columnas[destIdx].push(this.estado.descarte.pop());
+            }
+        }
+        this.estado.seleccion = null;
+        this.render();
+    }
+
+    intentarMoverADestino(palo) {
+        const sel = this.estado.seleccion;
+        if (!sel) return;
+        let carta = sel.tipo === 'columna' ? this.estado.columnas[sel.colIndex][sel.cartaIndex] : this.estado.descarte[this.estado.descarte.length-1];
+        if (!carta || (sel.tipo === 'columna' && sel.cartaIndex !== this.estado.columnas[sel.colIndex].length - 1)) return;
+
+        const pila = this.estado.pilasDestino[palo];
+        const esValido = (pila.length === 0 && carta.valor === 'A' && carta.signo === palo) || (pila.length > 0 && carta.signo === palo && carta.numero === pila[pila.length-1].numero + 1);
+
+        if (esValido) {
+            pila.push(sel.tipo === 'columna' ? this.estado.columnas[sel.colIndex].pop() : this.estado.descarte.pop());
+            if (sel.tipo === 'columna') this.revelarUltima(sel.colIndex);
+        }
+        this.estado.seleccion = null;
+        this.render();
+    }
+
+    autoMover(carta, info) {
+        for (const p of this.palos) {
+            this.estado.seleccion = info;
+            this.intentarMoverADestino(p.signo);
+            if (!this.estado.seleccion) return;
+        }
+        this.estado.seleccion = null;
+    }
+
+    revelarUltima(idx) {
+        const c = this.estado.columnas[idx];
+        if (c && c.length > 0) c[c.length-1].oculta = false;
+    }
+
+    chequearVictoria() {
+        const total = Object.values(this.estado.pilasDestino).flat().length;
+        if (total === 52) {
+            setTimeout(() => { alert("¡Victoria Magistral! 🏆"); location.reload(); }, 500);
+        }
+    }
+
+    configurarEventos() {
+        document.getElementById('mazo-origen').onclick = () => this.robarCarta();
+        document.getElementById('btn-reiniciar').onclick = () => confirm("¿Reiniciar?") && location.reload();
+    }
 }
-function hasGameEnded() {
-    if (snake[0].x < 0 || snake[0].x >= tileCount || snake[0].y < 0 || snake[0].y >= tileCount) return true;
-    for (let i = 1; i < snake.length; i++) if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) return true;
-    return false;
-}
+
+new Solitario();

@@ -8,17 +8,8 @@
 </head>
 <body>
     <h1 class="titulo-juego">Solitario</h1>
-
-    <div id="pantalla-inicio">
-        <h1 class="titulo-juego" style="margin-bottom: 20px;">Solitario</h1>
-        <button id="boton-jugar" class="boton-juego">JUGAR</button>
-    </div>
     
-    <div id="tablero" style="display: none;">
-        <div style="text-align: center; margin-bottom: 15px;">
-            <button id="btn-rendirse" class="boton-juego" style="padding: 8px 15px; font-size: 14px; background-color: #555;">Reiniciar Partida</button>
-        </div>
-
+    <div id="tablero">
         <div class="zona-superior">
             <div class="mazo-y-descarte">
                 <div id="mazo-origen" class="pila"></div>
@@ -44,10 +35,7 @@
         </div>
     </div>
 
-    <div id="controles-fin" style="display: none; text-align: center; margin-top: 20px;">
-        <button id="btn-reiniciar" class="boton-juego">VOLVER A JUGAR</button>
-        <button id="btn-salir" class="boton-juego" style="background-color: #ff0055; color: white;">SALIR AL MENÚ</button>
-    </div>
+    <button id="btn-reiniciar" class="boton-juego">Nueva Partida</button>
 
     <script src="script.js"></script>
 </body>
