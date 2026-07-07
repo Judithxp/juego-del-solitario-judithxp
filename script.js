@@ -11,10 +11,34 @@ class Solitario {
             pilasDestino: { '♥': [], '♦': [], '♣': [], '♠': [] },
             seleccion: null
         };
-        this.init();
+        
+        // 🟢 NUEVO: Configurar botones del menú antes de arrancar nada
+        this.configurarMenuInicial();
+    }
+
+    // 🟢 NUEVO: Controlar la pantalla de inicio
+    configurarMenuInicial() {
+        document.getElementById('boton-jugar').onclick = () => {
+            // Ocultar menú de inicio y mostrar el tablero
+            document.getElementById('pantalla-inicio').style.display = 'none';
+            document.getElementById('tablero').style.display = 'block';
+            
+            // Arrancar el juego de verdad
+            this.init();
+        };
+
+        // Configurar los botones del final para que funcionen desde ya
+        document.getElementById('btn-reiniciar').onclick = () => this.reiniciarPartida();
+        document.getElementById('btn-salir').onclick = () => this.salirAlMenu();
     }
 
     init() {
+        // Asegurarse de limpiar el estado por si venimos de otra partida
+        this.estado.descarte = [];
+        this.estado.columnas = [[], [], [], [], [], [], []];
+        this.estado.pilasDestino = { '♥': [], '♦': [], '♣': [], '♠': [] };
+        this.estado.seleccion = null;
+
         this.crearBaraja();
         this.repartir();
         this.configurarEventos();
@@ -171,16 +195,33 @@ class Solitario {
         if (c && c.length > 0) c[c.length-1].oculta = false;
     }
 
+    // 🛠️ MODIFICADO: En vez de recargar la página, activa tus botones al ganar
     chequearVictoria() {
         const total = Object.values(this.estado.pilasDestino).flat().length;
         if (total === 52) {
-            setTimeout(() => { alert("¡Victoria Magistral! 🏆"); location.reload(); }, 500);
+            setTimeout(() => { 
+                alert("¡Victoria Magistral! 🏆"); 
+                // Mostramos el div que contiene los botones de Reiniciar y Salir
+                document.getElementById('controles-fin').style.display = 'block';
+            }, 500);
         }
     }
 
     configurarEventos() {
         document.getElementById('mazo-origen').onclick = () => this.robarCarta();
-        document.getElementById('btn-reiniciar').onclick = () => confirm("¿Reiniciar?") && location.reload();
+    }
+
+    // 🟢 NUEVA FUNCIÓN: Volver a jugar otra partida directamente
+    reiniciarPartida() {
+        document.getElementById('controles-fin').style.display = 'none';
+        this.init();
+    }
+
+    // 🟢 NUEVA FUNCIÓN: Salir por completo al menú principal
+    salirAlMenu() {
+        document.getElementById('controles-fin').style.display = 'none';
+        document.getElementById('tablero').style.display = 'none';
+        document.getElementById('pantalla-inicio').style.display = 'flex';
     }
 }
 
