@@ -183,5 +183,16 @@ class Solitario {
         document.getElementById('btn-reiniciar').onclick = () => confirm("¿Reiniciar?") && location.reload();
     }
 }
+// --- FUNCIÓN NUEVA PARA OCULTAR LA PANTALLA (NUEVO) ---
+function iniciarJuego() {
+    const pantalla = document.getElementById('pantalla-inicio');
+    // Esto añade la clase 'oculto' que definimos en el CSS
+    pantalla.classList.add('oculto');
+    
+    // Si tu juego requiere que llames a alguna función para empezar,
+    // puedes ponerla aquí debajo, por ejemplo:
+    // iniciarCronometro();
+    // repartir();
+}
 
 new Solitario();
