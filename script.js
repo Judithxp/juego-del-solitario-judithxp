@@ -26,6 +26,11 @@ class Solitario {
             // Arrancar el juego de verdad
             this.init();
         };
+        document.getElementById('btn-rendirse').onclick = () => {
+            if (confirm("¿Te has quedado atascado? ¿Quieres empezar otra partida?")) {
+                this.init();
+            }
+        };
 
         // Configurar los botones del final para que funcionen desde ya
         document.getElementById('btn-reiniciar').onclick = () => this.reiniciarPartida();
